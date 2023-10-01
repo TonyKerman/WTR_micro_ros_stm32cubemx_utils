@@ -5,8 +5,6 @@ export BASE_PATH=/project/$MICROROS_LIBRARY_FOLDER
 
 ######## Init ########
 
-apt update
-apt install -y gcc-arm-none-eabi
 
 cd /uros_ws
 
@@ -51,15 +49,6 @@ if [ $RET_CODE = "0" ]; then
     echo "-------------"
     read -p "Do you want to continue with them? (y/n)" -n 1 -r
     echo
-    if [[ $REPLY =~ ^[Yy]$ ]]
-    then
-        echo "Continuing..."
-    else
-        echo "Aborting"
-        exit 0;
-    fi
-else
-    echo "Please read README.md to update your Makefile"
     exit 1;
 fi
 popd > /dev/null

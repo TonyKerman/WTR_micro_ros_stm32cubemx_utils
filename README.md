@@ -1,36 +1,30 @@
 ![banner](.images/banner-dark-theme.png#gh-dark-mode-only)
 ![banner](.images/banner-light-theme.png#gh-light-mode-only)
 
-# micro-ROS for STM32CubeMX/IDE
+# micro-ROS for STM32CubeMX(vscode-eide)
 
-This tool aims to ease the micro-ROS integration in a STM32CubeMX/IDE project.
+在eide，stm32cubemx和freetros下使用microros
 
-- [micro-ROS for STM32CubeMX/IDE](#micro-ros-for-stm32cubemxide)
-  - [Middlewares available](#middlewares-available)
+- [micro-ROS for STM32CubeMX(vscode-eide)](#micro-ros-for-stm32cubemxvscode-eide)
   - [Using this package with STM32CubeMX](#using-this-package-with-stm32cubemx)
-  - [Using this package with STM32CubeIDE](#using-this-package-with-stm32cubeide)
-  - [Transport configuration](#transport-configuration)
-    - [U(S)ART with DMA](#usart-with-dma)
-    - [U(S)ART with Interrupts](#usart-with-interrupts)
+  - [可用传输方式](#可用传输方式)
+    - [U(S)ART DMA](#usart-dma)
+    - [U(S)ART  中断模式IT](#usart--中断模式it)
     - [USB CDC](#usb-cdc)
-  - [Customizing the micro-ROS library](#customizing-the-micro-ros-library)
+  - [定制 micro-ROS 库](#定制-micro-ros-库)
   - [Adding custom packages](#adding-custom-packages)
-  - [Purpose of the Project](#purpose-of-the-project)
-  - [License](#license)
-  - [Known Issues/Limitations](#known-issueslimitations)
-## Middlewares available
-
-This package support the usage of micro-ROS on top of two different middlewares:
-- [eProsima Micro XRCE-DDS](https://micro-xrce-dds.docs.eprosima.com/en/latest/): the default micro-ROS middleware.
-- [embeddedRTPS](https://github.com/embedded-software-laboratory/embeddedRTPS): an experimental implementation of a RTPS middleware compatible with ROS 2. **Instructions on how to use it available [here](./embeddedrtps.md).**
 
 ## Using this package with STM32CubeMX
 
-1. Clone this repository in your STM32CubeMX project folder. A sample project can be generated with the provided `sample_project.ioc`.
-2. Make sure that your STM32CubeMX project is using a `Makefile` toolchain under `Project Manager -> Project`
-3. Make sure that if you are using FreeRTOS, the micro-ROS task **has more than 10 kB of stack**: [Detail](.images/Set_freertos_stack.jpg)
-4. Configure the transport interface on the STM32CubeMX project, check the [Transport configuration](#Transport-configuration) section for instructions on the custom transports provided.
-5. Modify the generated `Makefile` to include the following code **before the `build the application` section**:
+1. 将此存储库克隆到您的 STM32CubeMX 项目文件夹中（要求能同时看见makfile 与 WTR_micro_ros_stm32cubemx_utils）。使用cubemx生成项目,可参考`sample_project.ioc`。 
+注意：
+* 使用的stm32 需要支持10kb堆栈的FreRTOS Task（大概是f4吧）
+* 开启UARTx-DMA，具体步骤在[可用传输方式](#可用传输方式)
+* 使用FreeRTOS-v2
+* `FREERTOS->Tasks and Queues`中将一个线程`Stack Size`设置为3000（3000*4bytes=12kb,要求至少10kb [Detail](.images/Set_freertos_stack.jpg)）
+* 使用  Makefile 工具链
+
+2.修改生成的 Makefile， 在 `build the application` 部分之前添加以下代码：
 
    <!-- # Removing heap4 manager while being polite with STM32CubeMX
    TMPVAR := $(C_SOURCES)
@@ -55,93 +49,49 @@ This package support the usage of micro-ROS on top of two different middlewares:
       @echo $(CFLAGS)
    ```
 
-6. Execute the static library generation tool. Compiler flags will retrieved automatically from your `Makefile` and user will be prompted to check if they are correct.
+3. 使用Dockerfile构建并运行microros静态库生成工具：
+```bash
+#在micro-ros-lib-builder下
+docker build -t tony/micro-ros-lib-build-humble .
 
+```
+4. 执行静态库生成工具。编译器标志将从您的 Makefile 自动检索，成功的标志是显示的项目Makefile的CFLAGS不为空
+```bash
+cd ... #移动到含有makefile的目录下
+docker run -it --rm -v $(pwd):/project --env MICROROS_LIBRARY_FOLDER=WTR_micro_ros_stm32cubemx_utils/microros_static_library tony/micro-ros-lib-build-humble 
+```
+5. 修改您的 `main.c` 以使用 micro-ROS。可以在 `sample_main.c` 中找到示例应用程序。
 
-   ```bash
-   docker pull microros/micro_ros_static_library_builder:humble
-   docker run -it --rm -v $(pwd):/project --env MICROROS_LIBRARY_FOLDER=micro_ros_stm32cubemx_utils/microros_static_library microros/micro_ros_static_library_builder:humble
-   ```
+## 可用传输方式
 
-1. Modify your `main.c` to use micro-ROS. An example application can be found in `sample_main.c`.
-2. Continue your usual workflow building your project and flashing the binary:
+### U(S)ART DMA
 
-   ```bash
-   make -j$(nproc)
-   ```
+设置步骤:
+   - 在 STM32CubeMX 中启用 U(S)ART
+   - 对于选定的 USART，在 `DMA Settings` 下启用 Tx 和 Rx 的 DMA
+   - 将 Tx 和 Rx 的 DMA priotity设置为 `Very High``
+   - 将 Rx 的 DMA 模式设置为 `Circular` ： [详细信息](.images/Set_UART_DMA1.jpg)
+   - 对于选定的USART，启用 `NVIC Settings` 下的 `global interrupt` ：[详细信息](.images/Set_UART_DMA_2.jpg)
 
-## Using this package with STM32CubeIDE
+### U(S)ART  中断模式IT
 
-micro-ROS can be used with SMT32CubeIDE following these steps:
-
-1. Clone this repository in your STM32CubeIDE project folder
-2. Go to `Project -> Settings -> C/C++ Build -> Settings -> Build Steps Tab` and in `Pre-build steps` add:
-
-   ```bash
-   docker pull microros/micro_ros_static_library_builder:humble && docker run --rm -v ${workspace_loc:/${ProjName}}:/project --env MICROROS_LIBRARY_FOLDER=micro_ros_stm32cubemx_utils/microros_static_library_ide microros/micro_ros_static_library_builder:humble
-   ```
-
-3. Add micro-ROS include directory. In `Project -> Settings -> C/C++ Build -> Settings -> Tool Settings Tab -> MCU GCC Compiler -> Include paths` add `micro_ros_stm32cubemx_utils/microros_static_library_ide/libmicroros/include`
-4. Add the micro-ROS precompiled library. In `Project -> Settings -> C/C++ Build -> Settings -> MCU GCC Linker -> Libraries`
-      - add `<ABSOLUTE_PATH_TO>/micro_ros_stm32cubemx_utils/microros_static_library_ide/libmicroros` in `Library search path (-L)`
-      - add `microros` in `Libraries (-l)`
-5. Add the following source code files to your project, dragging them to source folder:
-      - `extra_sources/microros_time.c`
-      - `extra_sources/microros_allocators.c`
-      - `extra_sources/custom_memory_manager.c`
-      - `extra_sources/microros_transports/dma_transport.c` or your transport selection.
-6. Make sure that if you are using FreeRTOS, the micro-ROS task **has more than 10 kB of stack**: [Detail](.images/Set_freertos_stack.jpg)
-7. Configure the transport interface on the STM32CubeMX project, check the [Transport configuration](#Transport-configuration) section for instructions on the custom transports provided.
-8. Build and run your project
-## Transport configuration
-
-Available transport for this platform are:
-### U(S)ART with DMA
-
-Steps to configure:
-   - Enable U(S)ART in your STM32CubeMX
-   - For the selected USART, enable DMA for Tx and Rx under `DMA Settings`
-   - Set the DMA priotity to `Very High` for Tx and Rx
-   - Set the DMA mode to `Circular` for Rx: [Detail](.images/Set_UART_DMA1.jpg)
-   - For the selected, enable `global interrupt` under `NVIC Settings`: [Detail](.images/Set_UART_DMA_2.jpg)
-
-### U(S)ART with Interrupts
-
-Steps to configure:
-   - Enable U(S)ART in your STM32CubeMX
-   - For the selected USART, enable `global interrupt` under `NVIC Settings`: [Detail](.images/Set_UART_IT.jpg)
+设置步骤:
+   - 在 STM32CubeMX 中启用 U(S)ART
+   - 对于选定的 USART，启用 `NVIC Settings` 下的 `global interrupt` ： [详细信息](.images/Set_UART_IT.jpg)
 
 ### USB CDC
 
-Steps to configure:
-   - Enable the USB in your STM32CubeMX `Connectivity` tab.
-   - Select the `Communication Device Class (Virtual Port Com)` mode on the `Middleware -> USB_DEVICE` configuration.
+设置步骤:
+   - 在 STM32CubeMX `Connectivity` 选项卡中启用 USB。
+   - 在 `Middleware -> USB_DEVICE` 配置上选择 `Communication Device Class (Virtual Port Com)` 模式。
 
-      **Note: The micro-ROS transport will override the autogenerated `USB_DEVICE/App/usbd_cdc_if.c` methods.**
+      **注意：micro-ROS 传输将覆盖自动生成的 `USB_DEVICE/App/usbd_cdc_if.c` 中的方法。**
 
-## Customizing the micro-ROS library
+## 定制 micro-ROS 库
 
-All the micro-ROS configuration can be done in `colcon.meta` file before step 3. You can find detailed information about how to tune the static memory usage of the library in the [Middleware Configuration tutorial](https://micro.ros.org/docs/tutorials/advanced/microxrcedds_rmw_configuration/).
+所有 micro-ROS 配置都可以在步骤 3 之前在 `colcon.meta` 文件中完成。您可以在[中间件配置教程](https://micro.ros.org/docs/tutorials/advanced/microxrcedds_rmw_configuration/)中找到有关如何调整库的静态内存使用情况的详细信息。
+
 ## Adding custom packages
 
-Note that folders added to `microros_static_library/library_generation/extra_packages/` and entries added to `/microros_static_library/library_generation/extra_packages/extra_packages.repos` will be taken into account by this build system.
+请注意，此构建系统将考虑添加到 `microros_static_library/library_generation/extra_packages/` 的文件夹和添加到 `/microros_static_library/library_generation/extra_packages/extra_packages.repos` 的条目。
 
-## Purpose of the Project
-
-This software is not ready for production use. It has neither been developed nor
-tested for a specific use case. However, the license conditions of the
-applicable Open Source licenses allow you to adapt the software to your needs.
-Before using it in a safety relevant setting, make sure that the software
-fulfills your requirements and adjust it according to any applicable safety
-standards, e.g., ISO 26262.
-
-## License
-
-This repository is open-sourced under the Apache-2.0 license. See the [LICENSE](LICENSE) file for details.
-
-For a list of other open-source components included in this repository,
-see the file [3rd-party-licenses.txt](3rd-party-licenses.txt).
-
-## Known Issues/Limitations
-
-There are no known limitations.
