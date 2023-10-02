@@ -8,5 +8,5 @@ Makefile
 *.ld
 build
 .vscode
-libmicroros
+
 custombuild
