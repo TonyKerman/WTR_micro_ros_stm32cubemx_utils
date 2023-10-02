@@ -5,6 +5,8 @@ export BASE_PATH=/project/$MICROROS_LIBRARY_FOLDER
 
 ######## Init ########
 
+apt update
+apt install -y gcc-arm-none-eabi
 
 cd /uros_ws
 
@@ -17,7 +19,7 @@ ros2 run micro_ros_setup create_firmware_ws.sh generate_lib
 pushd firmware/mcu_ws > /dev/null
 
     # Workaround: Copy just tf2_msgs
-    git clone -b humble https://github.com/ros2/geometry2
+    git clone -b iron https://github.com/ros2/geometry2
     cp -R geometry2/tf2_msgs ros2/tf2_msgs
     rm -rf geometry2
 
@@ -49,6 +51,15 @@ if [ $RET_CODE = "0" ]; then
     echo "-------------"
     read -p "Do you want to continue with them? (y/n)" -n 1 -r
     echo
+    if [[ $REPLY =~ ^[Yy]$ ]]
+    then
+        echo "Continuing..."
+    else
+        echo "Aborting"
+        exit 0;
+    fi
+else
+    echo "Please read README.md to update your Makefile"
     exit 1;
 fi
 popd > /dev/null
