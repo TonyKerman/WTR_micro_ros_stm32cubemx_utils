@@ -5,8 +5,6 @@ export BASE_PATH=/project/$MICROROS_LIBRARY_FOLDER
 
 ######## Init ########
 
-apt update
-apt install -y gcc-arm-none-eabi
 
 cd /uros_ws
 
