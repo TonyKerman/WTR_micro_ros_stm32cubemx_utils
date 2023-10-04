@@ -1,9 +1,9 @@
 ![banner](.images/banner-dark-theme.png#gh-dark-mode-only)
 ![banner](.images/banner-light-theme.png#gh-light-mode-only)
 
-# micro-ROS for STM32CubeMX(vscode-eide)
+# micro-ROS for STM32CubeMX
 
-在eide，stm32cubemx和freetros下使用microros
+stm32cubemx和freetros下使用microros
 
 - [micro-ROS for STM32CubeMX(vscode-eide)](#micro-ros-for-stm32cubemxvscode-eide)
   - [配置stm32下位机](#配置stm32下位机)
@@ -18,53 +18,91 @@
   - [Adding custom packages](#adding-custom-packages)
   - [参考](#参考)
 
-## 配置stm32下位机
-
-1. 将此存储库克隆到您的 STM32CubeMX 项目文件夹中（要求能同时看见makfile 与 WTR_micro_ros_stm32cubemx_utils）。使用cubemx生成项目,可参考`sample_project.ioc`。 
-注意：
+## 配置stm32下位机(cubeMX)
+1. 将此存储库克隆到您的 STM32CubeMX 项目文件夹中(主目录)
+2. 配置cubeMX
 * 使用的stm32 需要支持10kb堆栈的FreRTOS Task（大概是f4吧）
 * 开启UARTx-DMA，具体步骤在[可用传输方式](#可用传输方式)
 * 使用FreeRTOS-v2
 * `FREERTOS->Tasks and Queues`中将一个线程`Stack Size`设置为3000（3000*4bytes=12kb,要求至少10kb [Detail](.images/Set_freertos_stack.jpg)）
-* 使用  Makefile 工具链
-
-2.修改生成的 Makefile， 在 `build the application` 部分之前添加以下代码：
-
-   <!-- # Removing heap4 manager while being polite with STM32CubeMX
-   TMPVAR := $(C_SOURCES)
-   C_SOURCES := $(filter-out Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.c, $(TMPVAR)) -->
+* 使用Makefile工具链
+3. 修改生成的 Makefile， 在 `build the application` 部分之前添加以下代码：
 
    ```makefile
    #######################################
    # micro-ROS addons
    #######################################
-   LDFLAGS += micro_ros_stm32cubemx_utils/microros_static_library/libmicroros/libmicroros.a
-   C_INCLUDES += -Imicro_ros_stm32cubemx_utils/microros_static_library/libmicroros/microros_include
+   LDFLAGS += WTR_micro_ros_stm32cubemx_utils/microros_static_library/libmicroros/libmicroros.a
+   C_INCLUDES += -IWTR_micro_ros_stm32cubemx_utils/microros_static_library/libmicroros/microros_include
 
    # Add micro-ROS utils
-   C_SOURCES += micro_ros_stm32cubemx_utils/extra_sources/custom_memory_manager.c
-   C_SOURCES += micro_ros_stm32cubemx_utils/extra_sources/microros_allocators.c
-   C_SOURCES += micro_ros_stm32cubemx_utils/extra_sources/microros_time.c
+   C_SOURCES += WTR_micro_ros_stm32cubemx_utils/extra_sources/custom_memory_manager.c
+   C_SOURCES += WTR_micro_ros_stm32cubemx_utils/extra_sources/microros_allocators.c
+   C_SOURCES += WTR_micro_ros_stm32cubemx_utils/extra_sources/microros_time.c
 
    # Set here the custom transport implementation
    C_SOURCES += micro_ros_stm32cubemx_utils/extra_sources/microros_transports/dma_transport.c
 
    print_cflags:
       @echo $(CFLAGS)
+   
    ```
 
 3. 使用Dockerfile构建并运行microros静态库生成工具：
 ```bash
 #在micro-ros-lib-builder下
 docker build -t tony/micro-ros-lib-build-humble .
-
 ```
-4. 执行静态库生成工具。编译器标志将从您的 Makefile 自动检索，成功的标志是显示的项目Makefile的CFLAGS不为空
+构建成功后，你可以在本地镜像列表中看到`tony/micro-ros-lib-build-humble`镜像，下次不需要再次构建
+5. 执行静态库生成工具。编译器标志将从您的 Makefile 自动检索，成功的标志是显示的项目Makefile的CFLAGS不为空
 ```bash
 cd ... #移动到含有makefile的目录下
 docker run -it --rm -v $(pwd):/project --env MICROROS_LIBRARY_FOLDER=WTR_micro_ros_stm32cubemx_utils/microros_static_library tony/micro-ros-lib-build-humble 
 ```
-5. 修改您的 `main.c` 以使用 micro-ROS。可以在 `sample_main.c` 中找到示例应用程序。
+生成静态库后，你可以更改工具链
+### 使用Makefile工具链
+直接用
+
+#### 注意，Eide使用的不是Makefile工具链，需要额外配置
+### 使用Clion(Stm32CubeIDE)工具链
+1. 在Clion中新建一个cubemx工程
+2. 将生成静态库后的`WTR_micro_ros_stm32cubemx_utils`文件夹和`.ioc`文件复制到新工程下
+3. 使用`.ioc`文件生成工程(Stm32CubeIDE工具链)
+4. 在`CMakeLists.txt`中添加/修改以下代码
+- 去除注释，打开硬件浮点支持
+```cmake
+add_compile_definitions(ARM_MATH_CM4;ARM_MATH_MATRIX_CHECK;ARM_MATH_ROUNDING)
+add_compile_options(-mfloat-abi=hard -mfpu=fpv4-sp-d16)
+add_link_options(-mfloat-abi=hard -mfpu=fpv4-sp-d16)
+```
+- 添加Include路径
+```cmake
+include_directories(
+        xxx
+        WTR_micro_ros_stm32cubemx_utils/microros_static_library/libmicroros/microros_include
+)
+```
+- 添加源文件
+```cmake
+file(GLOB_RECURSE SOURCES "Core/*.*"
+        "Middlewares/*.*"
+        "Drivers/*.*"
+        "WTR_micro_ros_stm32cubemx_utils/extra_sources/custom_memory_manager.c"
+        "WTR_micro_ros_stm32cubemx_utils/extra_sources/microros_allocators.c"
+        "WTR_micro_ros_stm32cubemx_utils/extra_sources/microros_time.c"
+        "WTR_micro_ros_stm32cubemx_utils/extra_sources/microros_transports/dma_transport.c"#按照你选择的传输方式添加对应的源文件
+)
+```
+- 在`add_executable(${PROJECT_NAME}.elf ${SOURCES} ${LINKER_SCRIPT}`后添加(加入库文件):
+```cmake
+
+# 构建绝对路径
+set(LIBMICROROS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/WTR_micro_ros_stm32cubemx_utils/microros_static_library/libmicroros")
+# 添加库文件搜索路径
+link_directories(${LIBMICROROS_PATH})
+# 链接库，使用库的实际名称
+target_link_libraries(${PROJECT_NAME}.elf PRIVATE ${LIBMICROROS_PATH}/libmicroros.a)
+```
 ## 配置ros2上位机
 ### 前提
 已经安装ros2 humble 环境
