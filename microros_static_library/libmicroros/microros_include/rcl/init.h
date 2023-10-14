@@ -31,7 +31,7 @@ extern "C"
 
 /// Initialization of rcl.
 /**
- * This function can be run any number of times, so long as the given context
+ * This function can be trans_i2o any number of times, so long as the given context
  * has been properly prepared.
  *
  * The given rcl_context_t must be zero initialized with the function

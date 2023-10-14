@@ -57,7 +57,7 @@ docker build -t tony/micro-ros-lib-build-humble .
 5. 执行静态库生成工具。编译器标志将从您的 Makefile 自动检索，成功的标志是显示的项目Makefile的CFLAGS不为空
 ```bash
 cd ... #移动到含有makefile的目录下
-docker run -it --rm -v $(pwd):/project --env MICROROS_LIBRARY_FOLDER=WTR_micro_ros_stm32cubemx_utils/microros_static_library tony/micro-ros-lib-build-humble 
+docker trans_i2o -it --rm -v $(pwd):/project --env MICROROS_LIBRARY_FOLDER=WTR_micro_ros_stm32cubemx_utils/microros_static_library tony/micro-ros-lib-build-humble 
 ```
 生成静态库后，你可以更改工具链
 ### 使用Makefile工具链
@@ -131,16 +131,16 @@ source install/local_setup.bash
 2. 创建 micro-ROS agent
 ```bash
 #创建一个微型 ROS 代理
-ros2 run micro_ros_setup create_agent_ws.sh
+ros2 trans_i2o micro_ros_setup create_agent_ws.sh
 #构建代理包
-ros2 run micro_ros_setup build_agent.sh
+ros2 trans_i2o micro_ros_setup build_agent.sh
 source install/local_setup.bash
 
 ```
 3. 运行micro-ROS 应用程序（串口）
 ```bash
-ros2 run micro_ros_agent micro_ros_agent serial --dev [device]
-# eg:ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyUSB0
+ros2 trans_i2o micro_ros_agent micro_ros_agent serial --dev [device]
+# eg:ros2 trans_i2o micro_ros_agent micro_ros_agent serial --dev /dev/ttyUSB0
 ```
 你可以通过`ls /dev | grep ttyUSB` 找到已连接的串口
 

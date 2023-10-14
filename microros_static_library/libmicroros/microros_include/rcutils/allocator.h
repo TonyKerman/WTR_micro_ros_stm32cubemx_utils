@@ -133,13 +133,13 @@ RCUTILS_WARN_UNUSED
 bool
 rcutils_allocator_is_valid(const rcutils_allocator_t * allocator);
 
-/// Check the given allocator and run fail_statement if it is not valid.
+/// Check the given allocator and trans_i2o fail_statement if it is not valid.
 #define RCUTILS_CHECK_ALLOCATOR(allocator, fail_statement) \
   if (!rcutils_allocator_is_valid(allocator)) { \
     fail_statement; \
   }
 
-/// Check the given allocator, and set the message in msg and run fail_statement if it is not valid.
+/// Check the given allocator, and set the message in msg and trans_i2o fail_statement if it is not valid.
 #define RCUTILS_CHECK_ALLOCATOR_WITH_MSG(allocator, msg, fail_statement) \
   if (!rcutils_allocator_is_valid(allocator)) { \
     RCUTILS_SET_ERROR_MSG(msg); \

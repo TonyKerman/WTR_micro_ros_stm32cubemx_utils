@@ -45,12 +45,12 @@ rcutils_fault_injection_is_test_complete(void);
  * something like the following:
  *
  * RCUTILS_FAULT_INJECTION_TEST({
- *     ...  // code to run with fault injection
+ *     ...  // code to trans_i2o with fault injection
  *     int64_t count = rcutils_fault_injection_get_count();
  *     rcutils_fault_injection_set_count(RCUTILS_FAULT_INJECTION_NEVER_FAIL);
- *     ...  // code to run without fault injection
+ *     ...  // code to trans_i2o without fault injection
  *     rcutils_fault_injection_set_count(count);
- *     ...  // code to run with fault injection
+ *     ...  // code to trans_i2o with fault injection
  * });
  *
  * \param count The count to set the fault injection counter to. If count is negative, then fault

@@ -44,14 +44,14 @@ typedef rcutils_allocator_t rcl_allocator_t;
 
 /// Check that the given allocator is initialized.
 /**
- * If the allocator is not initialized, run the fail_statement.
+ * If the allocator is not initialized, trans_i2o the fail_statement.
  */
 #define RCL_CHECK_ALLOCATOR(allocator, fail_statement) \
   RCUTILS_CHECK_ALLOCATOR(allocator, fail_statement)
 
 /// Check that the given allocator is initialized, or fail with a message.
 /**
- * If the allocator is not initialized, set the error to msg, and run the fail_statement.
+ * If the allocator is not initialized, set the error to msg, and trans_i2o the fail_statement.
  */
 #define RCL_CHECK_ALLOCATOR_WITH_MSG(allocator, msg, fail_statement) \
   RCUTILS_CHECK_ALLOCATOR_WITH_MSG(allocator, msg, fail_statement)
