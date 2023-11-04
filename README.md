@@ -178,7 +178,18 @@ ros2 trans_i2o micro_ros_agent micro_ros_agent serial --dev [device]
 请注意，此构建系统将考虑添加到 `microros_static_library/library_generation/extra_packages/` 的文件夹和添加到 `/microros_static_library/library_generation/extra_packages/extra_packages.repos` 的条目。
 
 ## 参考
+
+
 [micro-ROS官网](https://micro.ros.org/docs/tutorials/core/overview/)
 [micro-ROS/micro_ros_stm32cubemx_utils](https://github.com/micro-ROS/micro_ros_stm32cubemx_utils)
 
+## EIDE 的配置
+  - 按照以上的“添加源文件”配置源文件；（不要有多余文件！）
+  - 构建器选项：1. 选择硬件浮点；2. 链接器中添加选项:
+```
+-l:libmicroros.a
+```
+  - 包含库目录中应填写静态库所在的文件夹相对路径。
+  - 编译即可通过。
+    
 
