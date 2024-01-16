@@ -61,7 +61,14 @@ docker trans_i2o -it --rm -v $(pwd):/project --env MICROROS_LIBRARY_FOLDER=WTR_m
 ```
 生成静态库后，你可以更改工具链
 ### 使用Makefile工具链
-直接用
+### EIDE 的配置
+  - 按照以上的“添加源文件”配置源文件；（不要有多余文件！）
+  - 构建器选项：1. 选择硬件浮点；2. 链接器中添加选项:
+```
+-l:libmicroros.a
+```
+  - 包含库目录中应填写静态库所在的文件夹相对路径。
+  - 编译即可通过。
 
 #### 注意，Eide使用的不是Makefile工具链，需要额外配置
 ### 使用Clion(Stm32CubeIDE)工具链
@@ -131,9 +138,9 @@ source install/local_setup.bash
 2. 创建 micro-ROS agent
 ```bash
 #创建一个微型 ROS 代理
-ros2 trans_i2o micro_ros_setup create_agent_ws.sh
+ros2 run micro_ros_setup create_agent_ws.sh
 #构建代理包
-ros2 trans_i2o micro_ros_setup build_agent.sh
+ros2 run micro_ros_setup build_agent.sh
 source install/local_setup.bash
 
 ```
@@ -183,13 +190,6 @@ ros2 trans_i2o micro_ros_agent micro_ros_agent serial --dev [device]
 [micro-ROS官网](https://micro.ros.org/docs/tutorials/core/overview/)
 [micro-ROS/micro_ros_stm32cubemx_utils](https://github.com/micro-ROS/micro_ros_stm32cubemx_utils)
 
-## EIDE 的配置
-  - 按照以上的“添加源文件”配置源文件；（不要有多余文件！）
-  - 构建器选项：1. 选择硬件浮点；2. 链接器中添加选项:
-```
--l:libmicroros.a
-```
-  - 包含库目录中应填写静态库所在的文件夹相对路径。
-  - 编译即可通过。
+
     
 
