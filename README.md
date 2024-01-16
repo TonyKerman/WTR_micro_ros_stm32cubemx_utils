@@ -146,8 +146,8 @@ source install/local_setup.bash
 ```
 3. 运行micro-ROS 应用程序（串口）
 ```bash
-ros2 trans_i2o micro_ros_agent micro_ros_agent serial --dev [device]
-# eg:ros2 trans_i2o micro_ros_agent micro_ros_agent serial --dev /dev/ttyUSB0
+ros2 run micro_ros_agent micro_ros_agent serial --dev [device]
+# eg:ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyUSB0
 ```
 你可以通过`ls /dev | grep ttyUSB` 找到已连接的串口
 
